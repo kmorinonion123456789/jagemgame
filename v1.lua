@@ -1,15 +1,23 @@
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
 local RS = game:GetService("ReplicatedStorage")
 local indexRemote = RS:FindFirstChild("IndexRemote")
+local RunService = game:GetService("RunService")
+
+player.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+    rootPart = char:WaitForChild("HumanoidRootPart")
+end)
 
 local toggles = {
     ["GOD"] = true,
     ["SECRET"] = true,
-    ["MYTHICAL"] = true
+    ["MYTHICAL"] = true,
+    ["NOCLIP"] = false
 }
-
 
 local rarityGroups = {
     ["GOD"] = {priority = 100, keys = {"GOD", "ゴッド"}},
@@ -17,28 +25,18 @@ local rarityGroups = {
     ["MYTHICAL"] = {priority = 80, keys = {"MYTHICAL", "ミシカル", "みしかる", "MYTHIC", "MITHIC"}}
 }
 
-
-local function getPriority(model)
-    local highest = 0
-    for _, v in pairs(model:GetDescendants()) do
-        if v:IsA("TextLabel") then
-            local txt = string.gsub(string.upper(v.Text), "%s+", "")
-            for group, data in pairs(rarityGroups) do
-                -- スイッチがONのグループだけ判定する
-                if toggles[group] then
-                    for _, key in ipairs(data.keys) do
-                        if string.find(txt, string.upper(key)) then
-                            if data.priority > highest then highest = data.priority end
-                        end
-                    end
+RunService.Stepped:Connect(function()
+    if toggles["NOCLIP"] then
+        if player.Character then
+            for _, v in pairs(player.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    v.CanCollide = false
                 end
             end
         end
     end
-    return highest
-end
+end)
 
--- GUI
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UIListLayout = Instance.new("UIListLayout")
@@ -46,10 +44,10 @@ local Title = Instance.new("TextLabel")
 
 local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
 ScreenGui.Parent = success and coreGui or player:WaitForChild("PlayerGui")
-ScreenGui.Name = "MishikaruHunter_V3"
+ScreenGui.Name = "まうそ様とくもりんが付き合いましたはーと"
 
 Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 220, 0, 300) 
+Frame.Size = UDim2.new(0, 220, 0, 480)
 Frame.Position = UDim2.new(0.5, -110, 0.15, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Frame.Active = true
@@ -61,13 +59,12 @@ UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 Title.Parent = Frame
 Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Text = "kmorinとまうそ様が付き合いましたはーと"
+Title.Text = "Mishikaru Hunter V3"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.BackgroundColor3 = Color3.fromRGB(170, 0, 255)
 Title.Font = Enum.Font.GothamBold
 
--- ON/OFFスイッチボタン
-local function createToggleBtn(label, groupName)
+local function createToggleBtn(label, groupName, color)
     local btn = Instance.new("TextButton", Frame)
     btn.Size = UDim2.new(0, 200, 0, 35)
     btn.Font = Enum.Font.Gotham
@@ -76,7 +73,7 @@ local function createToggleBtn(label, groupName)
     local function refresh()
         if toggles[groupName] then
             btn.Text = label .. " : ON"
-            btn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+            btn.BackgroundColor3 = color or Color3.fromRGB(0, 150, 0)
         else
             btn.Text = label .. " : OFF"
             btn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
@@ -93,6 +90,62 @@ end
 createToggleBtn("ゴッド", "GOD")
 createToggleBtn("シークレット", "SECRET")
 createToggleBtn("ミシカル", "MYTHICAL")
+createToggleBtn("ノークリップ", "NOCLIP", Color3.fromRGB(0, 120, 255))
+
+local SpeedFrame = Instance.new("Frame", Frame)
+SpeedFrame.Size = UDim2.new(0, 200, 0, 60)
+SpeedFrame.BackgroundTransparency = 1
+
+local SpeedLabel = Instance.new("TextLabel", SpeedFrame)
+SpeedLabel.Size = UDim2.new(1, 0, 0, 25)
+SpeedLabel.Text = "Speed: " .. humanoid.WalkSpeed
+SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Font = Enum.Font.Gotham
+
+local MinusBtn = Instance.new("TextButton", SpeedFrame)
+MinusBtn.Size = UDim2.new(0, 95, 0, 30)
+MinusBtn.Position = UDim2.new(0, 0, 0, 25)
+MinusBtn.Text = "-10"
+MinusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+MinusBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local PlusBtn = Instance.new("TextButton", SpeedFrame)
+PlusBtn.Size = UDim2.new(0, 95, 0, 30)
+PlusBtn.Position = UDim2.new(0, 105, 0, 25)
+PlusBtn.Text = "+10"
+PlusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+PlusBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local function updateSpeed(amt)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        local h = player.Character.Humanoid
+        h.WalkSpeed = math.clamp(h.WalkSpeed + amt, 0, 500)
+        SpeedLabel.Text = "Speed: " .. h.WalkSpeed
+    end
+end
+
+MinusBtn.MouseButton1Click:Connect(function() updateSpeed(-10) end)
+PlusBtn.MouseButton1Click:Connect(function() updateSpeed(10) end)
+
+local function getPriority(model)
+    local highest = 0
+    for _, v in pairs(model:GetDescendants()) do
+        if v:IsA("TextLabel") then
+            local txt = string.gsub(string.upper(v.Text), "%s+", "")
+            for group, data in pairs(rarityGroups) do
+                if toggles[group] then
+                    for _, key in ipairs(data.keys) do
+                        if string.find(txt, string.upper(key)) then
+                            if data.priority > highest then highest = data.priority end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return highest
+end
 
 local isFarming = false
 
@@ -178,6 +231,3 @@ startBtn.MouseButton1Click:Connect(function()
         startBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
-
-print("✅ UI-Switch Farmer Loaded!")
-
