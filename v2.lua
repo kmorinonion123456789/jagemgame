@@ -49,7 +49,7 @@ ScreenGui.Parent = success and coreGui or player:WaitForChild("PlayerGui")
 ScreenGui.Name = "JagemuGomi_KumorinKami_Mod"
 
 Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 220, 0, 560) -- ボタン追加に伴い少し延長
+Frame.Size = UDim2.new(0, 220, 0, 560)
 Frame.Position = UDim2.new(0.5, -110, 0.15, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Frame.BorderSizePixel = 0
@@ -139,7 +139,7 @@ SpeedFrame.BackgroundTransparency = 1
 
 local SpeedLabel = Instance.new("TextLabel", SpeedFrame)
 SpeedLabel.Size = UDim2.new(1, 0, 0, 25)
-SpeedLabel.Text = "Speed: " .. humanoid.WalkSpeed
+SpeedLabel.Text = "Speed: " .. (humanoid and humanoid.WalkSpeed or 16)
 SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
 SpeedLabel.BackgroundTransparency = 1
 SpeedLabel.Font = Enum.Font.Gotham
@@ -169,7 +169,7 @@ end
 MinusBtn.MouseButton1Click:Connect(function() updateSpeed(-10) end)
 PlusBtn.MouseButton1Click:Connect(function() updateSpeed(10) end)
 
--- +5スピード購入ボタンv2の追加したところ
+-- +5スピード購入
 local BuySpeedBtn = Instance.new("TextButton", Frame)
 BuySpeedBtn.Size = UDim2.new(0, 200, 0, 35)
 BuySpeedBtn.Text = "+5 スピード購入"
@@ -187,7 +187,7 @@ BuySpeedBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 売るボタん
+-- 売るボタン
 local sellBtn = Instance.new("TextButton", Frame)
 sellBtn.Size = UDim2.new(0, 200, 0, 40)
 sellBtn.Text = "売る (Delete Brainrot)"
@@ -224,11 +224,14 @@ local function getPriority(model)
     return highest
 end
 
-local isFarming = false
+
 local function findBestTarget()
     local bestTarget = nil
     local minDistance = math.huge
     local maxPriority = 0
+    
+    local minZThreshold = 113.9
+
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BillboardGui") then
             local model = obj:FindFirstAncestorOfClass("Model")
@@ -236,7 +239,13 @@ local function findBestTarget()
                 local priority = getPriority(model)
                 if priority >= 80 then
                     local part = model:FindFirstChildWhichIsA("MeshPart") or model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
+                    
                     if part then
+                        -- ★ Z座標が113.9未満の場合は無視（スキップ）して次を探す
+                        if part.Position.Z < minZThreshold then
+                            continue 
+                        end
+
                         local dist = (rootPart.Position - part.Position).Magnitude
                         if priority > maxPriority or (priority == maxPriority and dist < minDistance) then
                             maxPriority = priority
@@ -251,6 +260,7 @@ local function findBestTarget()
     return bestTarget
 end
 
+local isFarming = false
 local function startFarming()
     if isFarming then return end
     isFarming = true
@@ -268,7 +278,8 @@ local function startFarming()
                     end
                 end
                 if prompt then
-                    if fireproximityprompt then fireproximityprompt(prompt)
+                    if fireproximityprompt then 
+                        fireproximityprompt(prompt)
                     else
                         prompt:InputHoldBegin()
                         task.wait(0.1)
@@ -281,6 +292,7 @@ local function startFarming()
             end)
             task.wait(0.2)
         else
+            -- 条件に合うターゲットがいない時は少し待機
             task.wait(0.5)
         end
     end
