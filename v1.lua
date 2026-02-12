@@ -25,7 +25,7 @@ local rarityGroups = {
     ["MYTHICAL"] = {priority = 80, keys = {"MYTHICAL", "ミシカル", "みしかる", "MYTHIC", "MITHIC"}}
 }
 
--- NOCLIP処理
+-- のうくりっぷ
 RunService.Stepped:Connect(function()
     if toggles["NOCLIP"] then
         if player.Character then
@@ -38,7 +38,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- UI構築
+-- UI
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UIListLayout = Instance.new("UIListLayout")
@@ -49,13 +49,13 @@ ScreenGui.Parent = success and coreGui or player:WaitForChild("PlayerGui")
 ScreenGui.Name = "JagemuGomi_KumorinKami_Mod"
 
 Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 220, 0, 480)
+Frame.Size = UDim2.new(0, 220, 0, 520) -- ボタン追加に伴い少し縦長に調整
 Frame.Position = UDim2.new(0.5, -110, 0.15, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Frame.BorderSizePixel = 0
 Frame.Active = true
 Frame.Draggable = true
-Frame.ClipsDescendants = true -- 最小化時に中身をはみ出させない
+Frame.ClipsDescendants = true
 
 UIListLayout.Parent = Frame
 UIListLayout.Padding = UDim.new(0, 5)
@@ -69,7 +69,7 @@ Title.BackgroundColor3 = Color3.fromRGB(170, 0, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextScaled = true
 
--- 最小化ボタンの作成
+-- 最小化
 local isMinimized = false
 local originalHeight = Frame.Size.Y.Offset
 local minimizeBtn = Instance.new("TextButton", Frame)
@@ -80,9 +80,8 @@ minimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
 minimizeBtn.Font = Enum.Font.GothamBold
 minimizeBtn.BorderSizePixel = 0
-minimizeBtn.ZIndex = 10 -- 常に最前面
+minimizeBtn.ZIndex = 10
 
--- 最小化ロジック
 minimizeBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     if isMinimized then
@@ -96,7 +95,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
     else
         minimizeBtn.Text = "-"
         Frame:TweenSize(UDim2.new(0, 220, 0, originalHeight), "Out", "Quad", 0.2, true)
-        task.wait(0.1) -- アニメーションに合わせて表示
+        task.wait(0.1)
         for _, child in pairs(Frame:GetChildren()) do
             if child ~= Title and child ~= minimizeBtn and not child:IsA("UIListLayout") then
                 if child:IsA("GuiObject") then child.Visible = true end
@@ -170,7 +169,24 @@ end
 MinusBtn.MouseButton1Click:Connect(function() updateSpeed(-10) end)
 PlusBtn.MouseButton1Click:Connect(function() updateSpeed(10) end)
 
--- ファームロジック
+-- 売るボタん
+local sellBtn = Instance.new("TextButton", Frame)
+sellBtn.Size = UDim2.new(0, 200, 0, 40)
+sellBtn.Text = "売る (Delete Brainrot)"
+sellBtn.BackgroundColor3 = Color3.fromRGB(0, 85, 255)
+sellBtn.TextColor3 = Color3.new(1, 1, 1)
+sellBtn.Font = Enum.Font.GothamBold
+sellBtn.BorderSizePixel = 0
+
+sellBtn.MouseButton1Click:Connect(function()
+    local deleteRemote = RS:FindFirstChild("DeleteHeldBrainrot")
+    if deleteRemote then
+        deleteRemote:FireServer()
+    else
+        warn("RemoteEvent 'DeleteHeldBrainrot' が ReplicatedStorage に見つかりません。")
+    end
+end)
+
 local function getPriority(model)
     local highest = 0
     for _, v in pairs(model:GetDescendants()) do
