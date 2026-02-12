@@ -90,9 +90,9 @@ local function createToggleBtn(label, groupName)
     refresh()
 end
 
-createToggleBtn("ゴッド級", "GOD")
-createToggleBtn("シークレット級", "SECRET")
-createToggleBtn("ミシカル/みしかる級", "MYTHICAL")
+createToggleBtn("ゴッド", "GOD")
+createToggleBtn("シークレット", "SECRET")
+createToggleBtn("ミシカル", "MYTHICAL")
 
 local isFarming = false
 
