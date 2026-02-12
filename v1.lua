@@ -25,6 +25,7 @@ local rarityGroups = {
     ["MYTHICAL"] = {priority = 80, keys = {"MYTHICAL", "ミシカル", "みしかる", "MYTHIC", "MITHIC"}}
 }
 
+-- NOCLIP処理
 RunService.Stepped:Connect(function()
     if toggles["NOCLIP"] then
         if player.Character then
@@ -37,6 +38,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
+-- UI構築
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local UIListLayout = Instance.new("UIListLayout")
@@ -44,14 +46,16 @@ local Title = Instance.new("TextLabel")
 
 local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
 ScreenGui.Parent = success and coreGui or player:WaitForChild("PlayerGui")
-ScreenGui.Name = "まうそ様とくもりんが付き合いましたはーと"
+ScreenGui.Name = "JagemuGomi_KumorinKami_Mod"
 
 Frame.Parent = ScreenGui
 Frame.Size = UDim2.new(0, 220, 0, 480)
 Frame.Position = UDim2.new(0.5, -110, 0.15, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Frame.BorderSizePixel = 0
 Frame.Active = true
 Frame.Draggable = true
+Frame.ClipsDescendants = true -- 最小化時に中身をはみ出させない
 
 UIListLayout.Parent = Frame
 UIListLayout.Padding = UDim.new(0, 5)
@@ -59,10 +63,47 @@ UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 Title.Parent = Frame
 Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Text = "Mishikaru Hunter V3"
+Title.Text = "ジァゲムはごみ！くもりんは神！"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.BackgroundColor3 = Color3.fromRGB(170, 0, 255)
 Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+
+-- 最小化ボタンの作成
+local isMinimized = false
+local originalHeight = Frame.Size.Y.Offset
+local minimizeBtn = Instance.new("TextButton", Frame)
+minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+minimizeBtn.Position = UDim2.new(1, -32, 0, 2)
+minimizeBtn.Text = "-"
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.ZIndex = 10 -- 常に最前面
+
+-- 最小化ロジック
+minimizeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        minimizeBtn.Text = "+"
+        Frame:TweenSize(UDim2.new(0, 220, 0, 35), "Out", "Quad", 0.2, true)
+        for _, child in pairs(Frame:GetChildren()) do
+            if child ~= Title and child ~= minimizeBtn and not child:IsA("UIListLayout") then
+                if child:IsA("GuiObject") then child.Visible = false end
+            end
+        end
+    else
+        minimizeBtn.Text = "-"
+        Frame:TweenSize(UDim2.new(0, 220, 0, originalHeight), "Out", "Quad", 0.2, true)
+        task.wait(0.1) -- アニメーションに合わせて表示
+        for _, child in pairs(Frame:GetChildren()) do
+            if child ~= Title and child ~= minimizeBtn and not child:IsA("UIListLayout") then
+                if child:IsA("GuiObject") then child.Visible = true end
+            end
+        end
+    end
+end)
 
 local function createToggleBtn(label, groupName, color)
     local btn = Instance.new("TextButton", Frame)
@@ -90,8 +131,9 @@ end
 createToggleBtn("ゴッド", "GOD")
 createToggleBtn("シークレット", "SECRET")
 createToggleBtn("ミシカル", "MYTHICAL")
-createToggleBtn("ノークリップ", "NOCLIP", Color3.fromRGB(0, 120, 255))
+createToggleBtn("ノーリップ", "NOCLIP", Color3.fromRGB(0, 120, 255))
 
+-- スピード調整
 local SpeedFrame = Instance.new("Frame", Frame)
 SpeedFrame.Size = UDim2.new(0, 200, 0, 60)
 SpeedFrame.BackgroundTransparency = 1
@@ -128,6 +170,7 @@ end
 MinusBtn.MouseButton1Click:Connect(function() updateSpeed(-10) end)
 PlusBtn.MouseButton1Click:Connect(function() updateSpeed(10) end)
 
+-- ファームロジック
 local function getPriority(model)
     local highest = 0
     for _, v in pairs(model:GetDescendants()) do
@@ -148,12 +191,10 @@ local function getPriority(model)
 end
 
 local isFarming = false
-
 local function findBestTarget()
     local bestTarget = nil
     local minDistance = math.huge
     local maxPriority = 0
-
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BillboardGui") then
             local model = obj:FindFirstAncestorOfClass("Model")
@@ -179,13 +220,11 @@ end
 local function startFarming()
     if isFarming then return end
     isFarming = true
-    
     while isFarming do
         local target = findBestTarget()
         if target then
             rootPart.CFrame = target.p.CFrame * CFrame.new(0, 0, -3)
             task.wait(0.3)
-            
             pcall(function()
                 firetouchinterest(rootPart, target.p, 0)
                 local prompt = target.m:FindFirstChildOfClass("ProximityPrompt") or target.p:FindFirstChildOfClass("ProximityPrompt")
